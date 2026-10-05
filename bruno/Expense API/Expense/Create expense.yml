@@ -1,0 +1,46 @@
+info:
+  name: Create expense
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{base_url}}/expenses"
+  headers:
+    - name: Authorization
+      value: ""
+  body:
+    type: json
+    data: |-
+      {
+        "label": "Dépense pour achéter ma voiture",
+        "note": "Avec cette dépense est pour avoir acheter ma nouvelle voitire ! ",
+        "amount": 150000,
+        "category": "leisure"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: bru.setEnvVar("ExpenseId", res.getBody().id)
+    - type: tests
+      code: |-
+        test("Status 201", function () {
+          expect(res.getStatus()).to.equal(201);
+        });
+
+        test("Dépense ajoutée avec succès", function () {
+          expect(res.getBody().label).to.be.a("string").and.not.empty;
+        });
+
+        test("Appartient à l'utilisateur connecté", function () {
+          expect(res.getBody().userId).to.equal(bru.getEnvVar("userId"));
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

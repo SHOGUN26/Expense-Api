@@ -1,0 +1,16 @@
+name: local
+variables:
+  - name: userId
+    value: LRdUc1bXhrKQ7Ta68uQxeggsI6JKbwfC
+  - name: email
+    value: Jesuisleuser1@test.com
+  - name: token
+    value: ly8CFPM9ZMKAM4dP2ppiG10aSsrq2qba
+  - name: ExpenseId
+    value: dfb2dd53-e892-4550-b3a0-5c68e34db32b
+  - name: expenseId
+    value: 2386c462-4bbe-4d24-bf0d-f03972509926
+  - name: password
+    value: "123456789"
+  - name: name
+    value: user 1

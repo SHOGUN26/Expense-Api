@@ -1,0 +1,52 @@
+info:
+  name: Summary expense
+  type: http
+  seq: 6
+
+http:
+  method: GET
+  url: "{{base_url}}/expenses/summary"
+  headers:
+    - name: Authorization
+      value: Bearer {{token}}
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if (res.getStatus() === 200) {
+          bru.setVar("summaryTotal", res.getBody().total);
+        }
+    - type: tests
+      code: |-
+        test("Statut 200", function () {
+          expect(res.getStatus(), JSON.stringify(res.getBody())).to.equal(200);
+        });
+
+        test("Structure du résumé", function () {
+          const body = res.getBody();
+          expect(body).to.have.property("total").that.is.a("number");
+          expect(body).to.have.property("byCategory").that.is.an("array");
+        });
+
+        test("Le total est la somme des catégories", function () {
+          const body = res.getBody();
+          const somme = body.byCategory.reduce((acc, c) => acc + c.total, 0);
+          expect(body.total).to.be.closeTo(somme, 0.01);
+        });
+
+        test("Catégories valides", function () {
+          const valides = ["food", "transport", "leisure", "bills", "health", "other"];
+          res.getBody().byCategory.forEach((c) => {
+            expect(valides).to.include(c.category);
+            expect(c.count).to.be.above(0);
+          });
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

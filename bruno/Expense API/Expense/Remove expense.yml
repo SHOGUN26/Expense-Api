@@ -1,0 +1,27 @@
+info:
+  name: Remove expense
+  type: http
+  seq: 5
+
+http:
+  method: DELETE
+  url: "{{base_url}}/expenses/{{expenseId}}"
+  headers:
+    - name: Authorization
+      value: Bearer {{token}}
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Statut 404 (Dépenses d'un autre utilisateur)", function () {
+          expect(res.getStatus()).to.equal(404);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

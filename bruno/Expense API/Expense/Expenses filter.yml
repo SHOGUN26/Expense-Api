@@ -1,0 +1,64 @@
+info:
+  name: Expenses filter
+  type: http
+  seq: 7
+
+http:
+  method: GET
+  url: "{{base_url}}/expenses?category=other&from=2026-10-01&to=2026-10-31"
+  params:
+    - name: category
+      value: other
+      type: query
+    - name: from
+      value: 2026-10-01
+      type: query
+    - name: to
+      value: 2026-10-31
+      type: query
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const query = req.getUrl().split("?")[1] || "";
+        const params = {};
+        query.split("&").forEach((pair) => {
+          if (!pair) return;
+          const [key, value] = pair.split("=");
+          params[key] = decodeURIComponent(value || "");
+        });
+
+        const category = params.category;
+        const from = params.from;
+        const to = params.to;
+
+        test("Statut 200", function () {
+          expect(res.getStatus(), JSON.stringify(res.getBody())).to.equal(200);
+        });
+
+        test("La réponse est un tableau", function () {
+          expect(res.getBody()).to.be.an("array");
+        });
+
+        test("Les dépenses respectent les filtres", function () {
+          res.getBody().forEach((e) => {
+            if (category) expect(e.category).to.equal(category);
+            if (from) expect(new Date(e.date) >= new Date(`${from}T00:00:00.000Z`)).to.equal(true);
+            if (to) expect(new Date(e.date) <= new Date(`${to}T23:59:59.999Z`)).to.equal(true);
+          });
+        });
+
+        test("Toutes appartiennent à l'utilisateur connecté", function () {
+          res.getBody().forEach((e) => {
+            expect(e.userId).to.equal(bru.getEnvVar("userId"));
+          });
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

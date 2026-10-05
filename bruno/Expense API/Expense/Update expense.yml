@@ -1,0 +1,54 @@
+info:
+  name: Update expense
+  type: http
+  seq: 4
+
+http:
+  method: PATCH
+  url: "{{base_url}}/expenses/{{expenseId}}"
+  headers:
+    - name: Authorization
+      value: Bearer{{token}}
+  body:
+    type: json
+    data: |-
+      {
+        "label": "Dépense du mois de Mars",
+        "note": "Dépenses courantes du mois de Mars :Gaming dépense.",
+        "amount": 20000,
+        "category": "other"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Status 200", function () {
+          expect(res.getStatus()).to.equal(200);
+        });
+
+        test("L'id est inchangé", function () {
+          const idDansUrl = req.getUrl().split("/").pop();
+          expect(res.getBody().id).to.equal(idDansUrl);
+        });
+
+        test("Les champs sont modifiés", function () {
+          const sent = req.getBody();
+          const body = res.getBody();
+          expect(body.label).to.equal(sent.label);
+          expect(body.note).to.equal(sent.note);
+          expect(Number(body.amount)).to.equal(Number(sent.amount));
+          expect(body.category).to.equal(sent.category);
+        });
+
+        test("Appartient au bon utilisateur", function () {
+          expect(res.getBody().userId).to.equal(bru.getEnvVar("userId"));
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

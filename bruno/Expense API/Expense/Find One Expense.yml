@@ -1,0 +1,40 @@
+info:
+  name: Find One Expense
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: "{{base_url}}/expenses/{{expenseId}}"
+  headers:
+    - name: Authorization
+      value: Bearer{{token}}
+  auth: inherit
+
+runtime:
+  variables:
+    - name: expenseId
+      value: dfb2dd53-e892-4550-b3a0-5c68e34db32b
+  scripts:
+    - type: after-response
+      code: bru.setEnvVar("expenseId", res.getBody().id);
+    - type: tests
+      code: |-
+        test("Status 200", function () {
+          expect(res.getStatus()).to.equal(200);
+        });
+
+        test("L'id correspond", function () {
+          expect(res.getBody().id).to.equal(bru.getEnvVar("expenseId"));
+        });
+
+        test("Appartient au bon utilisateur", function () {
+          expect(res.getBody().userId).to.equal(bru.getEnvVar("userId"));
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

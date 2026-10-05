@@ -1,118 +1,95 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Expenses API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API REST de gestion de dépenses : chaque utilisateur gère uniquement **ses propres dépenses** et obtient un résumé par catégorie. Authentification par Better Auth.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+**Stack** : NestJS 11, TypeScript, PostgreSQL, Prisma, Better Auth, Zod, Swagger, Vitest + Supertest, Bruno.
 
-## Description
+## Prérequis
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- [Bun](https://bun.sh)
+- Node.js >= 22.12
+- Git
+- PostgreSQL (local ou Docker)
 
-## Project setup
+## Installation
 
 ```bash
-$ bun install
+git clone <url-du-repo> expenses-api
+cd expenses-api
+bun install
 ```
 
-## Compile and run the project
+## Configuration
+
+Copie `.env.example` vers `.env` et renseigne les valeurs :
+
+| Variable             | Rôle                                               |
+| -------------------- | -------------------------------------------------- |
+| `DATABASE_URL`       | adresse de connexion PostgreSQL                    |
+| `BETTER_AUTH_SECRET` | secret de signature des sessions                   |
+| `BETTER_AUTH_URL`    | URL de base de l'API (ex. `http://localhost:3000`) |
+| `PORT`               | port d'écoute                                      |
+
+Le fichier `.env` ne doit jamais être versionné.
+
+## Lancement
 
 ```bash
-# development
-$ bun run start
-
-# watch mode
-$ bun run start:dev
-
-# production mode
-$ bun run start:prod
+bun run db:migrate   # applique les migrations
+bun run dev          # lance l'API en mode watch
 ```
 
-## Run tests
+- API : `http://localhost:3000`
+- Documentation Swagger : `http://localhost:3000/docs`
+
+## Endpoints
+
+Authentification (Better Auth) : `POST /api/auth/sign-up/email`, `POST /api/auth/sign-in/email`.
+
+| Méthode | Route               | Description                                              |
+| ------- | ------------------- | -------------------------------------------------------- |
+| POST    | `/expenses`         | Créer une dépense                                        |
+| GET     | `/expenses`         | Lister mes dépenses (filtres : `category`, `from`, `to`) |
+| GET     | `/expenses/summary` | Total par catégorie                                      |
+| GET     | `/expenses/:id`     | Détail d'une dépense                                     |
+| PUT     | `/expenses/:id`     | Modifier une dépense                                     |
+| DELETE  | `/expenses/:id`     | Supprimer une dépense                                    |
+
+Catégories : `food`, `transport`, `leisure`, `bills`, `health`, `other`.
+Une dépense inexistante ou appartenant à un autre utilisateur renvoie **404**.
+
+## Tests
+
+### Tests automatisés (e2e)
 
 ```bash
-# unit tests
-$ bun run test
-
-# e2e tests
-$ bun run test:e2e
-
-# test coverage
-$ bun run test:cov
+bun run test:e2e
 ```
 
-## Deployment
+Les tests démarrent l'application eux-mêmes : il n'est pas nécessaire de lancer le serveur. Ils créent deux utilisateurs et vérifient la création, la validation (400), l'accès sans session (401), les filtres, le résumé et l'**isolation entre utilisateurs** (404).
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+> Les tests utilisent la base définie dans `DATABASE_URL`. Utilise une base dédiée (ex. `expenses_test`) pour ne pas polluer ta base de développement.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### Collection Bruno
 
-```bash
-$ bun install -g @nestjs/mau
-$ mau deploy
-```
+1. Ouvre Bruno, puis _Open Collection_ et sélectionne le dossier de la collection.
+2. Choisis l'environnement actif (variables `base_url`, `access_token`).
+3. Lance dans l'ordre : `Auth/Register`, `Auth/Login`, puis les requêtes du dossier `Expenses/`.
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Le login enregistre automatiquement `token` et `userId` dans l'environnement.
 
-## Observability
+## Déploiement
 
-In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
+Non déployé pour le moment. L'API se lance en local (voir « Lancement »).
 
-[NestJS Observe](https://observe.nestjs.com) automatically instruments your NestJS application, giving you deep visibility into your system with minimal setup:
+## Commandes utiles
 
-- **Distributed tracing:** Follow requests across services and understand how they flow through your system.
-- **Waterfall analysis:** Visualize request execution and identify slow operations, bottlenecks, and unexpected delays.
-- **Performance analysis:** Analyze application performance in real time and quickly pinpoint areas that need optimization.
-- **Metrics:** Track key application and infrastructure metrics to understand system health and performance trends.
-- **Logging:** Centralize and correlate logs with traces and other telemetry to make debugging easier.
-- **Error tracking:** Detect errors quickly and investigate their root causes with the surrounding context.
-- **SLA monitoring:** Track service-level objectives and identify when your application is approaching or exceeding defined thresholds.
-- **Alarms and alerts:** Set up alerts for critical errors, performance degradation, SLA violations, and other anomalies so your team can react quickly.
-
-This project is already instrumented. Create a free account at [observe.nestjs.com](https://observe.nestjs.com), add an application, and paste the generated app key and secret into the `ObserveModule.forRoot()` call in `src/app.module.ts`.
-
-The free plan needs no payment details and covers 300,000 events a month. You can also browse the [live demo](https://www.observe-demo.nestjs.com/dashboard) first - the whole dashboard over a busy service's data, with nothing to install.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Auto-instrument your application with [NestJS Observe](https://observe.nestjs.com). Distributed tracing, metrics, and logging made easy. Error tracking and performance monitoring for your NestJS applications.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+| Commande                          | Rôle                                  |
+| --------------------------------- | ------------------------------------- |
+| `bun run dev`                     | API en mode watch                     |
+| `bun run build` / `bun run start` | compiler / lancer la version compilée |
+| `bun run db:migrate`              | créer et appliquer une migration      |
+| `bun run db:studio`               | explorer les données                  |
+| `bun run test`                    | tests unitaires                       |
+| `bun run test:e2e`                | tests end-to-end                      |
+| `bun run check`                   | lint et format (Biome)                |

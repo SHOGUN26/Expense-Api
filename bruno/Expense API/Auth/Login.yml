@@ -1,0 +1,51 @@
+info:
+  name: Login
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{base_url}}/api/auth/sign-in/email"
+  body:
+    type: json
+    data: |-
+      {
+        "email": "{{email}}",
+        "password": "{{password}}"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if (res.getStatus() === 200) {
+          bru.setEnvVar("token", res.getBody().token);
+          bru.setEnvVar("userId", res.getBody().user.id);
+        }
+    - type: tests
+      code: |-
+        test("Statut 200", function () {
+          expect(res.getStatus(), JSON.stringify(res.getBody())).to.equal(200);
+        });
+
+        test("Token présent", function () {
+          expect(res.getBody().token).to.be.a("string").and.not.empty;
+        });
+
+        test("Email correspond à l'utilisateur connecté", function () {
+          const email = bru.getEnvVar("email");
+          expect(email).to.be.a("string").and.not.empty;
+          expect(res.getBody().user.email.toLowerCase()).to.equal(email.toLowerCase());
+        });
+
+        test("userId enregistré", function () {
+          expect(bru.getEnvVar("userId")).to.equal(res.getBody().user.id);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
