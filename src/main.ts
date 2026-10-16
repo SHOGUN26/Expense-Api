@@ -12,7 +12,7 @@ async function bootstrap() {
 	app.useGlobalPipes(new ZodValidationPipe());
 
 	const config = new DocumentBuilder()
-		.setTitle('NexaFood API')
+		.setTitle('Expense API')
 		.setVersion('0.1.0')
 		.addBearerAuth()
 		.build();

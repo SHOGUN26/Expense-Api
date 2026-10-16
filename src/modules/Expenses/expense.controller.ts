@@ -14,11 +14,12 @@ import { ExpenseService } from "./expense.service.js";
 import { Session,type UserSession } from "@thallesp/nestjs-better-auth";
 import { CreateExpenseDto } from "./dto/create-expenses.dto.js";
 import { UpdateExpenseDto } from './dto/update-expense.dto.js';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 
 
-
-
+@ApiTags('expenses')
+@ApiBearerAuth()
 @Controller('expenses')
 export class ExpenseController {
   constructor(private readonly expenseService: ExpenseService) {}
